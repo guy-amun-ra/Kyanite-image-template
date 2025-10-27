@@ -24,25 +24,16 @@ dnf5 install -y tmux
 
 systemctl enable podman.socket
 
-# Remove SteamOS / Steam Deck specific packages and window managers
-rpm-ostree override remove \
-    gamescope-session \
-    sddm-sugar-steamOS \
-    steamdeck-kde-presets \
-    steamdeck-kde-presets-desktop \
-    mutter \
-    gnome-shell
+# Remove SteamOS / Steam Deck specific packages (only those confirmed installed)
+dnf5 remove -y steam-devices steam-device-rules steam steamdeck-kde-presets-desktop || true
 
 # Install KDE Plasma desktop components explicitly
-rpm-ostree install plasma-desktop kwin sddm
+dnf5 install -y plasma-desktop kwin sddm
 
-# Remove SteamOS-specific sddm config to revert to KDE defaults
-rm -f /etc/sddm.conf.d/steamos.conf
+# Remove SteamOS-specific SDDM config to revert to KDE defaults
+rm -f /etc/sddm.conf.d/steamos.conf || true
 
 # Set KDE as default graphical target session
 loginctl set-default graphical.target || true
-
-# Finalize rpm-ostree changes
-rpm-ostree db filesystem
 
 echo "Build customization complete - SteamOS components removed, KDE Plasma desktop ensured."
