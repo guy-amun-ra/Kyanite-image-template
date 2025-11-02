@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-
 # Install additional packages with DNF5 that are not part of rpm-ostree overrides
 
 
@@ -38,16 +37,12 @@ rm -f /etc/sddm.conf.d/steamos.conf || true
 # Set KDE as default graphical target session
 loginctl set-default graphical.target || true
 
-
 ## DEBUGGING
-
-echo "Contents of /ctx/cfg/xorg:"
-ls -l /ctx/cfg/xorg/
-
+echo "Skipping /ctx/cfg/xorg ls due to workaround"
 ## END DEBUGGING
 
-
 # --- Start of GPD Pocket 4 specific additions ---
+
 
 # dnf5 -y copr enable hhd-dev/hhd TODO enabled handheld later
 # dnf5 -y install handheld-daemon
@@ -58,22 +53,15 @@ ls -l /ctx/cfg/xorg/
 #rpm-ostree kargs --append=fbcon=rotate:1 --append=video=eDP-1:panel_orientation=right_side_up
 
 # Read kernel cmdline parameters from cfg/kernel/cmdline
-if [ -f /ctx/cfg/kernel/cmdline ]; then
-  KERNEL_CMDLINE=$(cat /ctx/cfg/kernel/cmdline)
-
-  # Find the Bazzite systemd-boot entry file(s)
-  for ENTRY in /boot/loader/entries/*bazzite*.conf; do
-    if [ -f "$ENTRY" ]; then
-      echo "Appending kernel cmdline args to $ENTRY"
+# Manually write kernel cmdline to systemd-boot loader entry
+KERNEL_CMDLINE="fbcon=rotate:1 video=eDP-1:panel_orientation=right_side_up"
+for ENTRY in /boot/loader/entries/*bazzite*.conf; do
+  if [ -f "$ENTRY" ]; then
+    echo "Appending kernel cmdline args to $ENTRY"
       # Append the cmdline flags to the options line
-      sed -i "/^options / s/\$/ $KERNEL_CMDLINE/" "$ENTRY"
-    fi
-  done
-else
-  echo "Warning: kernel cmdline file /ctx/cfg/kernel/cmdline not found!"
-fi
-
-
+    sed -i "/^options / s/\$/ $KERNEL_CMDLINE/" "$ENTRY"
+  fi
+done
 # TODO enabled handheld later
 # Install handheld-daemon package for handheld device support (used by Bazzite)
 # dnf5 install -y handheld-daemon
@@ -85,12 +73,56 @@ fi
 # ln -sf /etc/systemd/system/handheld-daemon.service /etc/systemd/system/multi-user.target.wants/handheld-daemon.service
 
 # Copy Xorg config for GPD Pocket 4
-mkdir -p /etc/X11/xorg.conf.d/
-cp cfg/xorg/20-gpd-pocket4.conf /etc/X11/xorg.conf.d/
 
-# Copy SDDM KDE config
+# Manually write Xorg config file
+
+
+mkdir -p /etc/X11/xorg.conf.d/
+cat > /etc/X11/xorg.conf.d/20-gpd-pocket4.conf <<EOF
+Section "Device"
+    Identifier "Inteldrt"
+    Driver "intel"
+    Option "TearFree" "true"
+    Option "AccelMethod" "sna"
+EndSection
+
+Section "Monitor"
+    Identifier "eDP-1"
+    Option "Rotate" "right"
+EndSection
+
+Section "InputClass"
+    Identifier "touchscreen"
+    MatchIsTouchpad "on"
+    Option "Calibration" "0 1920 0 1080"
+    Option "InvertY" "true"
+EndSection
+EOF
+
+# Manually write SDDM config file
 mkdir -p /etc/sddm.conf.d/
-cp cfg/sddm/00-kde.conf /etc/sddm.conf.d/
+cat > /etc/sddm.conf.d/00-kde.conf <<EOF
+[General]
+InputMethod=
+UserModes=force
+EOF
+
+# Handheld daemon service setup (copy unit and enable symlink)
+mkdir -p /etc/systemd/system/multi-user.target.wants/
+cat > /etc/systemd/system/handheld-daemon.service <<EOF
+[Unit]
+Description=Handheld Daemon Support
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/handheld-daemon
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+ln -sf /etc/systemd/system/handheld-daemon.service /etc/systemd/system/multi-user.target.wants/handheld-daemon.service
 
 # --- End of GPD Pocket 4 specific additions ---
 
