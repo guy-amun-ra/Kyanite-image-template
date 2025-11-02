@@ -38,20 +38,22 @@ loginctl set-default graphical.target || true
 
 # --- Start of GPD Pocket 4 specific additions ---
 
-dnf5 -y copr enable hhd-dev/hhd
-dnf5 -y install handheld-daemon
+# dnf5 -y copr enable hhd-dev/hhd TODO enabled handheld later
+# dnf5 -y install handheld-daemon
 
 # Append kernel boot args for screen rotation and panel orientation
 # This command DOES NOT WORK inside the container build environment, comment it out
 #rpm-ostree kargs --append=fbcon=rotate:1 --append=video=eDP-1:panel_orientation=right_side_up
 
+# TODO enabled handheld later
 # Install handheld-daemon package for handheld device support (used by Bazzite)
-dnf5 install -y handheld-daemon
+# dnf5 install -y handheld-daemon
 
+# TODO enabled handheld later
 # Enable handheld daemon service by creating systemd symlink, not with systemctl enable inside build container
-mkdir -p /etc/systemd/system/multi-user.target.wants/
-cp cfg/systemd/handheld-daemon.service /etc/systemd/system/handheld-daemon.service
-ln -sf /etc/systemd/system/handheld-daemon.service /etc/systemd/system/multi-user.target.wants/handheld-daemon.service
+# mkdir -p /etc/systemd/system/multi-user.target.wants/
+# cp cfg/systemd/handheld-daemon.service /etc/systemd/system/handheld-daemon.service
+# ln -sf /etc/systemd/system/handheld-daemon.service /etc/systemd/system/multi-user.target.wants/handheld-daemon.service
 
 # Copy Xorg config for GPD Pocket 4
 mkdir -p /etc/X11/xorg.conf.d/
