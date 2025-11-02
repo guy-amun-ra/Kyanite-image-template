@@ -10,6 +10,8 @@ set -euo pipefail
 # https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/39/x86_64/repoview/index.html&protocol=https&redirect=1
 
 # this installs a package from fedora repos
+dnf5 install -y shadow-utils
+
 dnf5 install -y tmux
 
 
@@ -37,12 +39,12 @@ rm -f /etc/sddm.conf.d/steamos.conf || true
 # Set KDE as default graphical target session
 loginctl set-default graphical.target || true
 
+
 ## DEBUGGING
 echo "Skipping /ctx/cfg/xorg ls due to workaround"
 ## END DEBUGGING
 
 # --- Start of GPD Pocket 4 specific additions ---
-
 
 # dnf5 -y copr enable hhd-dev/hhd TODO enabled handheld later
 # dnf5 -y install handheld-daemon
