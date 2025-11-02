@@ -38,6 +38,9 @@ loginctl set-default graphical.target || true
 
 # --- Start of GPD Pocket 4 specific additions ---
 
+dnf5 -y copr enable hhd-dev/hhd
+dnf5 -y install handheld-daemon
+
 # Append kernel boot args for screen rotation and panel orientation
 # This command DOES NOT WORK inside the container build environment, comment it out
 #rpm-ostree kargs --append=fbcon=rotate:1 --append=video=eDP-1:panel_orientation=right_side_up
