@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+
 # Install additional packages with DNF5 that are not part of rpm-ostree overrides
 
 # Packages can be installed from any enabled yum repo on the image.
@@ -20,9 +21,8 @@ dnf5 install -y tmux
 
 #### Example for enabling a System Unit File
 
-# Enable any required systemd services
-
-systemctl enable podman.socket
+# Enable any required systemd services (podman.socket enablement likely works inside build container)
+systemctl enable podman.socket || true
 
 # Remove SteamOS / Steam Deck specific packages (only those confirmed installed)
 dnf5 remove -y steam-devices steam-device-rules steam steamdeck-kde-presets-desktop || true
@@ -39,13 +39,24 @@ loginctl set-default graphical.target || true
 # --- Start of GPD Pocket 4 specific additions ---
 
 # Append kernel boot args for screen rotation and panel orientation
-rpm-ostree kargs --append=fbcon=rotate:1 --append=video=eDP-1:panel_orientation=right_side_up
+# This command DOES NOT WORK inside the container build environment, comment it out
+#rpm-ostree kargs --append=fbcon=rotate:1 --append=video=eDP-1:panel_orientation=right_side_up
 
 # Install handheld-daemon package for handheld device support (used by Bazzite)
 dnf5 install -y handheld-daemon
 
-# Enable handheld daemon service
-systemctl enable handheld-daemon.service
+# Enable handheld daemon service by creating systemd symlink, not with systemctl enable inside build container
+mkdir -p /etc/systemd/system/multi-user.target.wants/
+cp cfg/systemd/handheld-daemon.service /etc/systemd/system/handheld-daemon.service
+ln -sf /etc/systemd/system/handheld-daemon.service /etc/systemd/system/multi-user.target.wants/handheld-daemon.service
+
+# Copy Xorg config for GPD Pocket 4
+mkdir -p /etc/X11/xorg.conf.d/
+cp cfg/xorg/20-gpd-pocket4.conf /etc/X11/xorg.conf.d/
+
+# Copy SDDM KDE config
+mkdir -p /etc/sddm.conf.d/
+cp cfg/sddm/00-kde.conf /etc/sddm.conf.d/
 
 # --- End of GPD Pocket 4 specific additions ---
 
