@@ -36,4 +36,17 @@ rm -f /etc/sddm.conf.d/steamos.conf || true
 # Set KDE as default graphical target session
 loginctl set-default graphical.target || true
 
-echo "Build customization complete - SteamOS components removed, KDE Plasma desktop ensured."
+# --- Start of GPD Pocket 4 specific additions ---
+
+# Append kernel boot args for screen rotation and panel orientation
+rpm-ostree kargs --append=fbcon=rotate:1 --append=video=eDP-1:panel_orientation=right_side_up
+
+# Install handheld-daemon package for handheld device support (used by Bazzite)
+dnf5 install -y handheld-daemon
+
+# Enable handheld daemon service
+systemctl enable handheld-daemon.service
+
+# --- End of GPD Pocket 4 specific additions ---
+
+echo "Build customization complete - SteamOS components removed, KDE Plasma desktop ensured, GPD Pocket 4 fixes applied."
