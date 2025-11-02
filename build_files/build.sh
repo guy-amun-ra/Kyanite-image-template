@@ -109,22 +109,22 @@ InputMethod=
 UserModes=force
 EOF
 
-# Handheld daemon service setup (copy unit and enable symlink)
-mkdir -p /etc/systemd/system/multi-user.target.wants/
-cat > /etc/systemd/system/handheld-daemon.service <<EOF
-[Unit]
-Description=Handheld Daemon Support
-After=network.target
+# # Handheld daemon service setup (copy unit and enable symlink)
+# mkdir -p /etc/systemd/system/multi-user.target.wants/
+# cat > /etc/systemd/system/handheld-daemon.service <<EOF
+# [Unit]
+# Description=Handheld Daemon Support
+# After=network.target
 
-[Service]
-ExecStart=/usr/bin/handheld-daemon
-Restart=on-failure
+# [Service]
+# ExecStart=/usr/bin/handheld-daemon
+# Restart=on-failure
 
-[Install]
-WantedBy=multi-user.target
-EOF
+# [Install]
+# WantedBy=multi-user.target
+# EOF
 
-ln -sf /etc/systemd/system/handheld-daemon.service /etc/systemd/system/multi-user.target.wants/handheld-daemon.service
+# ln -sf /etc/systemd/system/handheld-daemon.service /etc/systemd/system/multi-user.target.wants/handheld-daemon.service
 
 # --- End of GPD Pocket 4 specific additions ---
 
