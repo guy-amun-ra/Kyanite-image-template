@@ -4,6 +4,7 @@ set -euo pipefail
 
 # Install additional packages with DNF5 that are not part of rpm-ostree overrides
 
+
 # Packages can be installed from any enabled yum repo on the image.
 # RPMfusion repos are available by default in ublue main images
 # List of rpmfusion packages can be found here:
@@ -11,6 +12,7 @@ set -euo pipefail
 
 # this installs a package from fedora repos
 dnf5 install -y tmux
+
 
 # Use a COPR Example:
 #
@@ -42,16 +44,35 @@ loginctl set-default graphical.target || true
 echo "Contents of /ctx/cfg/xorg:"
 ls -l /ctx/cfg/xorg/
 
-## END DEBUGGIN
+## END DEBUGGING
+
 
 # --- Start of GPD Pocket 4 specific additions ---
 
 # dnf5 -y copr enable hhd-dev/hhd TODO enabled handheld later
 # dnf5 -y install handheld-daemon
 
-# Append kernel boot args for screen rotation and panel orientation
+
+# Append kernel boot args for screen rotation and panel orientation by modifying systemd-boot config
 # This command DOES NOT WORK inside the container build environment, comment it out
 #rpm-ostree kargs --append=fbcon=rotate:1 --append=video=eDP-1:panel_orientation=right_side_up
+
+# Read kernel cmdline parameters from cfg/kernel/cmdline
+if [ -f /ctx/cfg/kernel/cmdline ]; then
+  KERNEL_CMDLINE=$(cat /ctx/cfg/kernel/cmdline)
+
+  # Find the Bazzite systemd-boot entry file(s)
+  for ENTRY in /boot/loader/entries/*bazzite*.conf; do
+    if [ -f "$ENTRY" ]; then
+      echo "Appending kernel cmdline args to $ENTRY"
+      # Append the cmdline flags to the options line
+      sed -i "/^options / s/\$/ $KERNEL_CMDLINE/" "$ENTRY"
+    fi
+  done
+else
+  echo "Warning: kernel cmdline file /ctx/cfg/kernel/cmdline not found!"
+fi
+
 
 # TODO enabled handheld later
 # Install handheld-daemon package for handheld device support (used by Bazzite)
