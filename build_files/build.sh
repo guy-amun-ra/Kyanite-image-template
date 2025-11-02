@@ -36,6 +36,14 @@ rm -f /etc/sddm.conf.d/steamos.conf || true
 # Set KDE as default graphical target session
 loginctl set-default graphical.target || true
 
+
+## DEBUGGING
+
+echo "Contents of /ctx/cfg/xorg:"
+ls -l /ctx/cfg/xorg/
+
+## END DEBUGGIN
+
 # --- Start of GPD Pocket 4 specific additions ---
 
 # dnf5 -y copr enable hhd-dev/hhd TODO enabled handheld later
