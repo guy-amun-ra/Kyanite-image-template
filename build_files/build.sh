@@ -2,33 +2,26 @@
 set -euo pipefail
 
 # Install essential packages non-interactively
-dnf5 install -y -q shadow-utils tmux
+dnf5 install -y shadow-utils tmux
 
-# Enable podman.socket if possible (skip errors)
+# Enable podman.socket service if possible (skip errors)
 systemctl enable podman.socket || true
 
-# Remove Steam OS packages safely
-dnf5 remove -y -q steam-devices steam-device-rules steam steamdeck-kde-presets-desktop || true
+# Remove Steam OS specific packages
+dnf5 remove -y steam-devices steam-device-rules steam steamdeck-kde-presets-desktop || true
 
 # Install KDE Plasma desktop components explicitly
-dnf5 install -y -q plasma-desktop kwin sddm
+dnf5 install -y plasma-desktop kwin sddm
 
 # Remove Steam OS specific SDDM config to revert to KDE defaults
 rm -f /etc/sddm.conf.d/steamos.conf || true
 
-# Set KDE as default graphical target session (skip errors)
+# Set KDE as default graphical target
 loginctl set-default graphical.target || true
 
-# Append kernel boot args for GPD Pocket 4 screen rotation and panel orientation
-KERNEL_CMDLINE="fbcon=rotate:1 video=eDP-1:panel_orientation=right_side_up"
-for ENTRY in /boot/loader/entries/*bazzite*.conf; do
-  if [ -f "$ENTRY" ]; then
-    echo "Appending kernel cmdline args to $ENTRY"
-    sed -i "/^options / s/\$/ $KERNEL_CMDLINE/" "$ENTRY"
-  fi
-done
+# --- Start of GPD Pocket 4 specific display/input setup ---
 
-# Create Xorg config with touchscreen calibration and rotation
+# Create Xorg configuration for Intel GPU tear-free and rotation, touchscreen calibration
 mkdir -p /etc/X11/xorg.conf.d/
 cat > /etc/X11/xorg.conf.d/20-gpd-pocket4.conf <<EOF
 Section "Device"
@@ -51,7 +44,7 @@ Section "InputClass"
 EndSection
 EOF
 
-# Set custom SDDM config
+# Create SDDM config forcing KDE user modes
 mkdir -p /etc/sddm.conf.d/
 cat > /etc/sddm.conf.d/00-kde.conf <<EOF
 [General]
