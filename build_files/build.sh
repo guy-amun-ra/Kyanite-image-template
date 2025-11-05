@@ -21,14 +21,13 @@ loginctl set-default graphical.target || true
 
 # --- Start of GPD Pocket 4 specific display/input setup ---
 
-# Create Xorg configuration for Intel GPU tear-free and rotation, touchscreen calibration
+# Create Xorg configuration for AMD GPU tear-free and rotation, touchscreen calibration
 mkdir -p /etc/X11/xorg.conf.d/
 cat > /etc/X11/xorg.conf.d/20-gpd-pocket4.conf <<EOF
 Section "Device"
-    Identifier "Inteldrt"
-    Driver "intel"
+    Identifier "AMD Graphics"
+    Driver "amdgpu"
     Option "TearFree" "true"
-    Option "AccelMethod" "sna"
 EndSection
 
 Section "Monitor"
