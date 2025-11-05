@@ -19,3 +19,6 @@ enable = [
 disable = [
   "org.fedoraproject.Anaconda.Modules.Subscription",
 ]
+
+[customizations.bootloader]
+kernel_cmdline = "quiet fbcon=rotate:1 video=eDP-1:panel_orientation=right_side_up systemd.gpt_auto=0"
