@@ -9,8 +9,12 @@ set -euo pipefail
 # List of rpmfusion packages can be found here:
 # https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/39/x86_64/repoview/index.html&protocol=https&redirect=1
 
-# this installs a package from fedora repos
+
+# Assuming you have a chroot or target root path (e.g., $IMG_ROOT)
 dnf5 install -y shadow-utils
+dnf5 install --installroot=$IMG_ROOT -y shadow-utils
+
+# this installs a package from fedora repos
 
 dnf5 install -y tmux
 
