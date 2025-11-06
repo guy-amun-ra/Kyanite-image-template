@@ -1,11 +1,7 @@
-# disk_config/iso-kde.toml
-
-image = "ghcr.io/guy-amun-ra/kyanite-image-template:latest"
-
 [customizations.installer.kickstart]
 contents = """
 %post
-bootc switch --mutate-in-place --transport registry ghcr.io/ublue-os/image-template:latest
+bootc switch --mutate-in-place --transport registry ghcr.io/guy-amun-ra/kyanite-image-template:latest
 %end
 """
 
@@ -23,13 +19,3 @@ enable = [
 disable = [
   "org.fedoraproject.Anaconda.Modules.Subscription",
 ]
-
-# Custom kernel parameters for GPD Pocket 4 tweaks, including screen rotation
-[customizations.kernel]
-kernel_cmdline = "quiet splash fbcon=rotate:1 video=eDP-1:panel_orientation=right_side_up"
-
-# Optional: Additional customizations, like setting locale, hostname etc.
-[customizations.image]
-hostname = "kyanite"
-
-# You can add other container image specific labels or settings here as supported
