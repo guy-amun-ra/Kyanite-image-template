@@ -27,7 +27,7 @@ env:
   IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
   DEFAULT_TAG: "latest"
-  BIB_IMAGE: "ghcr.io/lorbuschris/bootc-image-builder:20250608" # "quay.io/centos-bootc/bootc-image-builder:latest" - see https://github.com/osbuild/bootc-image-builder/pull/954
+  BIB_IMAGE: "ghcr.io/lorbuschris/bootc-image-builder:20250608"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -65,17 +65,31 @@ jobs:
         run: |
           set -x
           sudo apt update -y
-          sudo apt install -y \
-            podman
+          sudo apt install -y podman
 
       - name: Maximize build space
         if: inputs.platform != 'arm64'
-        uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
+        uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e
         with:
           remove-codeql: true
 
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+      # NEW STEP – make sure we pull the container image built in build.yml
+      - name: Pull latest container image
+        run: |
+          echo "Pulling base image ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
+          podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
+
+      # --- NEW CLEANUP STEP FOR QCOW2 ---
+      - name: Cleanup Podman storage for QCOW2
+        if: matrix.disk-type == 'qcow2'
+        run: |
+          echo "Cleaning up Podman storage to free space..."
+          podman images -a
+          podman rmi tmp-container-deploy-* || true
+          podman system prune -f
 
       - name: Build disk images
         id: build
@@ -86,11 +100,11 @@ jobs:
           image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
-          additional-args: --use-librepo=True
+          additional-args: ${{ matrix.disk-type == 'qcow2' && '--use-librepo=True --rootfs ext4' || '--use-librepo=True' }}
 
       - name: Upload disk images and Checksum to Job Artifacts
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           path: ${{ steps.build.outputs.output-directory }}
           if-no-files-found: error
