@@ -51,4 +51,12 @@ InputMethod=
 UserModes=force
 EOF
 
+# --- Add kernel boot parameters via bootc kargs.d (recommended method) ---
+
+mkdir -p /usr/lib/bootc/kargs.d
+cat > /usr/lib/bootc/kargs.d/10-gpd-pocket4.toml <<EOF
+kargs = ["fbcon=rotate:1", "video=eDP-1:panel_orientation=right_side_up"]
+EOF
+
+
 echo "Build customization complete - SteamOS components removed, KDE Plasma desktop ensured, GPD Pocket 4 fixes applied."
