@@ -1,0 +1,10 @@
+[Unit]
+Description=Handheld Daemon Support
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/handheld-daemon
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

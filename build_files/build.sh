@@ -1,24 +1,62 @@
 #!/bin/bash
+set -euo pipefail
 
-set -ouex pipefail
+# Install essential packages non-interactively
+dnf5 install -y shadow-utils tmux
 
-### Install packages
+# Enable podman.socket service if possible (skip errors)
+systemctl enable podman.socket || true
 
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/39/x86_64/repoview/index.html&protocol=https&redirect=1
+# Remove Steam OS specific packages
+dnf5 remove -y steam-devices steam-device-rules steam steamdeck-kde-presets-desktop || true
 
-# this installs a package from fedora repos
-dnf5 install -y tmux 
+# Install KDE Plasma desktop components explicitly
+dnf5 install -y plasma-desktop kwin sddm
 
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
+# Remove Steam OS specific SDDM config to revert to KDE defaults
+rm -f /etc/sddm.conf.d/steamos.conf || true
 
-#### Example for enabling a System Unit File
+# Set KDE as default graphical target
+loginctl set-default graphical.target || true
 
-systemctl enable podman.socket
+# --- Start of GPD Pocket 4 specific display/input setup ---
+
+# Create Xorg configuration for AMD GPU tear-free and rotation, touchscreen calibration
+mkdir -p /etc/X11/xorg.conf.d/
+cat > /etc/X11/xorg.conf.d/20-gpd-pocket4.conf <<EOF
+Section "Device"
+    Identifier "AMD Graphics"
+    Driver "amdgpu"
+    Option "TearFree" "true"
+EndSection
+
+Section "Monitor"
+    Identifier "eDP-1"
+    Option "Rotate" "right"
+EndSection
+
+Section "InputClass"
+    Identifier "touchscreen"
+    MatchIsTouchpad "on"
+    Option "Calibration" "0 1920 0 1080"
+    Option "InvertY" "true"
+EndSection
+EOF
+
+# Create SDDM config forcing KDE user modes
+mkdir -p /etc/sddm.conf.d/
+cat > /etc/sddm.conf.d/00-kde.conf <<EOF
+[General]
+InputMethod=
+UserModes=force
+EOF
+
+# --- Add kernel boot parameters via bootc kargs.d (recommended method) ---
+
+mkdir -p /usr/lib/bootc/kargs.d
+cat > /usr/lib/bootc/kargs.d/10-gpd-pocket4.toml <<EOF
+kargs = ["fbcon=rotate:1", "video=eDP-1:panel_orientation=right_side_up"]
+EOF
+
+
+echo "Build customization complete - SteamOS components removed, KDE Plasma desktop ensured, GPD Pocket 4 fixes applied."
