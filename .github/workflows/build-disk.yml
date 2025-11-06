@@ -83,6 +83,11 @@ jobs:
           echo "Pulling base image ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
           podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
+      - name: Install useradd for ISO build
+        if: matrix.disk-type == 'anaconda-iso'
+        run: |
+          sudo dnf install -y shadow-utils || sudo apt-get install -y passwd
+
       - name: Build disk images
         id: build
         uses: osbuild/bootc-image-builder-action@main
