@@ -77,6 +77,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
+      # NEW STEP – make sure we pull the container image built in build.yml
+      - name: Pull latest container image
+        run: |
+          echo "Pulling base image ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
+          podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
+
       - name: Build disk images
         id: build
         uses: osbuild/bootc-image-builder-action@main
